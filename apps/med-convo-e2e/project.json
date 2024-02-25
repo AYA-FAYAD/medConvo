@@ -1,14 +1,14 @@
 {
-  "name": "yelp-camp-e2e",
+  "name": "med-convo-e2e",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "implicitDependencies": ["yelp-camp"],
+  "implicitDependencies": ["med-convo"],
   "projectType": "application",
   "targets": {
     "e2e": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{e2eProjectRoot}"],
       "options": {
-        "jestConfig": "apps/yelp-camp-e2e/jest.config.ts",
+        "jestConfig": "apps/med-convo-e2e/jest.config.ts",
         "passWithNoTests": true
       }
     }

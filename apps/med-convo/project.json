@@ -1,21 +1,21 @@
 {
-  "name": "yelp-camp",
+  "name": "med-convo",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/yelp-camp/src",
+  "sourceRoot": "apps/med-convo/src",
   "projectType": "application",
   "targets": {
     "serve": {
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
       "options": {
-        "buildTarget": "yelp-camp:build"
+        "buildTarget": "med-convo:build"
       },
       "configurations": {
         "development": {
-          "buildTarget": "yelp-camp:build:development"
+          "buildTarget": "med-convo:build:development"
         },
         "production": {
-          "buildTarget": "yelp-camp:build:production"
+          "buildTarget": "med-convo:build:production"
         }
       }
     }

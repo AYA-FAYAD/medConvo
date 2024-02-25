@@ -38,4 +38,10 @@ testem.log
 .DS_Store
 Thumbs.db
 
-.nx/cache
+# Nx-specific
+.nx/
+nx.json
+workspace.json
+
+# Custom environment files
+.env
