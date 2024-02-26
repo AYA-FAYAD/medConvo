@@ -29,6 +29,7 @@ model review{
   rating Int?
   conferences conferenceschema @relation(fields: [conferenceschemaId], references: [id], onDelete: Cascade)
   conferenceschemaId Int
+  author User []
 }
 
 model User{
@@ -37,6 +38,7 @@ model User{
   email String @unique
   password String
   conferenceschemas conferenceschema[]
+  review review[]
 
 
 }

@@ -16,7 +16,12 @@ const methodOverride = require('method-override');
 const catchAsync = require('./utils/catchAsync');
 const ExpressError = require('./utils/expressErorr');
 const { conferenceSchema, reviewSchema } = require('./convoschema');
-const { isLoggedIn } = require('./middellware');
+const {
+  isLoggedIn,
+  validateconferences,
+  validatereviwe,
+  isAuthor,
+} = require('./middellware');
 
 // import {  } from './views';
 
@@ -42,19 +47,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
 app.use('/assets', express.static(path.join(__dirname, './assets')));
 
-// const sessionConfig ={
-//   secret: 'thisshouldbebettersecret',
-//   resave: false,
-//   saveUninitialized : true,
-//   cookie:{
-//     httpOnly: true,
-//     expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
-//     maxAge: 1000 * 60 * 60 * 24 * 7
-//   }
-// }
-
-// app.use(session(sessionConfig));
-
 app.use(
   session({
     cookie: {
@@ -74,32 +66,12 @@ app.use(
 app.use(flash());
 
 app.use((req: any, res, next) => {
-  console.log(req.session);
+  // console.log(req.session);
   res.locals.currentUser = req.session.userId;
   res.locals.success = req.flash('success');
   res.locals.error = req.flash('error');
   next();
 });
-
-const validateconferences = (req, res, next) => {
-  const { error } = conferenceSchema.validate(req.body);
-  if (error) {
-    const msg = error.details.map((el) => el.message).join(',');
-    throw new ExpressError(msg, 400);
-  } else {
-    next();
-  }
-};
-
-const validatereviwe = (req, res, next) => {
-  const { error } = reviewSchema.validate(req.body);
-  if (error) {
-    const msg = error.details.map((el) => el.message).join(',');
-    throw new ExpressError(msg, 400);
-  } else {
-    next();
-  }
-};
 // Convert price to an integer
 const priceInt = (conference) => {
   if ('price' in conference) {
@@ -114,7 +86,6 @@ app.get(
   '/conferences',
   catchAsync(async (req, res) => {
     const conferences = await prisma.conferenceschema.findMany({});
-    //  { medicamps: medicamps } make ejs access to medicamps variable.
     res.render('conference/index', { conferences });
   })
 );
@@ -134,9 +105,6 @@ app.post(
   catchAsync(async (req, res, next) => {
     const conferenceData = req.body.conference;
     conferenceData.authors = { connect: { id: req.user.id } };
-    //  console.log(conferenceData.authors);
-
-    // Convert price to an integer
     priceInt(conferenceData);
     const conference = await prisma.conferenceschema.create({
       data: conferenceData,
@@ -154,57 +122,87 @@ app.get(
         id: parseInt(req.params.id),
       },
       include: {
-        reviews: true,
+        reviews: {
+          include: {
+            author: true,
+          },
+        },
         authors: true,
       },
     });
-
-    const currentUser = req.session;
-    conference.authors.forEach((author) => {
-      console.log(author.username);
-    });
+    const currentUser = parseInt(req.session.userId);
 
     if (!conference) {
       req.flash('error', 'Cannot find that conference');
       return res.redirect('/conferences');
     }
-    res.render('conference/show', { conference, currentUser });
+    const isAuthor = conference.authors.some(
+      (author) => author.id === currentUser
+    );
+
+    // console.log(isAuthor);
+
+    // const isAuthorReview = conference.reviews.map((review) =>
+    //   review.author.filter((author) => {
+    //     console.log('author', author);
+
+    //     return author.id === currentUser;
+    //   })
+    // );
+    const isAuthorReview = conference.reviews
+      .flatMap((review) => review.author) // Flatten the array of arrays
+      .map((author) => author.id);
+    console.log('Author IDs:', isAuthorReview);
+    const isCurrentUserReview = isAuthorReview.map((id) => id === currentUser);
+    console.log(isCurrentUserReview);
+
+    res.render('conference/show', {
+      conference,
+      currentUser,
+      isAuthor,
+      isAuthorReview,
+      isCurrentUserReview,
+    });
   })
 );
 
 app.get(
   '/conferences/:id/edit',
   isLoggedIn,
+  isAuthor,
   catchAsync(async (req, res) => {
     const conference = await prisma.conferenceschema.findUnique({
       where: {
         id: parseInt(req.params.id),
       },
     });
-
     if (!conference) {
       req.flash('error', 'Cannot find that conference');
       return res.redirect('/conferences');
     }
+
     res.render('conference/edit', { conference });
   })
 );
 
 app.put(
   '/conference/:id',
+  isLoggedIn,
+  isAuthor,
   validateconferences,
   catchAsync(async (req, res) => {
     const conferenceData = req.body.conference;
 
-    // Convert price to an integer
     priceInt(conferenceData);
+
     const conference = await prisma.conferenceschema.update({
       where: {
         id: parseInt(req.params.id),
       },
       data: conferenceData,
     });
-    req.flash('success', 'Successfully made a new conferences');
+
+    req.flash('success', 'Successfully updated the conference');
     res.redirect(`/conference/${conference.id}`);
   })
 );
@@ -213,21 +211,34 @@ app.put(
 app.post(
   '/conference/:id/reviews',
   validatereviwe,
+  isLoggedIn,
   catchAsync(async (req, res) => {
     const conferenceId = parseInt(req.params.id);
     const conference = await prisma.conferenceschema.findUnique({
       where: {
         id: conferenceId,
       },
+      include: {
+        reviews: true,
+        authors: true,
+      },
     });
+    // console.log(conference);
+
+    const currentUser = req.user;
     const { body, rating } = req.body.review;
     const review = await prisma.review.create({
       data: {
         body: body,
         rating: parseInt(rating),
         conferenceschemaId: conferenceId,
+        author: { connect: { id: currentUser.id } },
+      },
+      include: {
+        author: true,
       },
     });
+
     req.flash('success', 'Successfully made a new review');
     res.redirect(`/conference/${conferenceId}`);
   })
@@ -251,6 +262,8 @@ app.delete(
   '/conference/:id/reviews/:reviewId',
   catchAsync(async (req, res) => {
     const { id, reviewId } = req.params;
+    console.log(id, reviewId);
+
     await prisma.review.delete({
       where: {
         conferenceschemaId: parseInt(id),
