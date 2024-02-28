@@ -2,6 +2,13 @@
  * This is not a production server yet!
  * This is only a minimal backend to get started.
  */
+
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
+
+console.log(process.env.scret);
+
 const ejsMate = require('ejs-mate');
 import express from 'express';
 import { PrismaSessionStore } from '@quixo3/prisma-session-store';
@@ -12,9 +19,15 @@ import { error } from 'console';
 const session = require('express-session');
 const flash = require('connect-flash');
 const bcrypt = require('bcrypt');
-const methodOverride = require('method-override');
+const multer = require('multer');
 const catchAsync = require('./utils/catchAsync');
 const ExpressError = require('./utils/expressErorr');
+const conferences = require('./controllers/conferences');
+const reviews = require('./controllers/reviews');
+const users = require('./controllers/users');
+const { storage } = require('./cloudinary/index');
+const upload = multer({ storage });
+const methodOverride = require('method-override');
 const { conferenceSchema, reviewSchema } = require('./convoschema');
 const {
   isLoggedIn,
@@ -82,129 +95,34 @@ app.get('/', (req, res) => {
   res.render('home');
 });
 
-app.get(
-  '/conferences',
-  catchAsync(async (req, res) => {
-    const conferences = await prisma.conferenceschema.findMany({});
-    res.render('conference/index', { conferences });
-  })
-);
+app.get('/conferences', catchAsync(conferences.index));
 
-app.get(
-  '/conferences/new',
-  isLoggedIn,
-  catchAsync(async (req: any, res) => {
-    res.render('conference/new');
-  })
-);
+app.get('/conferences/new', isLoggedIn, catchAsync(conferences.renderNewForm));
 
 app.post(
   '/conferences',
+  upload.array('image'),
   isLoggedIn,
   validateconferences,
-  catchAsync(async (req, res, next) => {
-    const conferenceData = req.body.conference;
-    conferenceData.authors = { connect: { id: req.user.id } };
-    priceInt(conferenceData);
-    const conference = await prisma.conferenceschema.create({
-      data: conferenceData,
-    });
-    req.flash('success', 'Successfully made a new conferences');
-    return res.redirect(`/conference/${conference.id}`);
-  })
+  catchAsync(conferences.createConferences)
 );
 
-app.get(
-  '/conference/:id',
-  catchAsync(async (req, res) => {
-    const conference = await prisma.conferenceschema.findUnique({
-      where: {
-        id: parseInt(req.params.id),
-      },
-      include: {
-        reviews: {
-          include: {
-            author: true,
-          },
-        },
-        authors: true,
-      },
-    });
-    const currentUser = parseInt(req.session.userId);
-
-    if (!conference) {
-      req.flash('error', 'Cannot find that conference');
-      return res.redirect('/conferences');
-    }
-    const isAuthor = conference.authors.some(
-      (author) => author.id === currentUser
-    );
-
-    // console.log(isAuthor);
-
-    // const isAuthorReview = conference.reviews.map((review) =>
-    //   review.author.filter((author) => {
-    //     console.log('author', author);
-
-    //     return author.id === currentUser;
-    //   })
-    // );
-    const isAuthorReview = conference.reviews
-      .flatMap((review) => review.author) // Flatten the array of arrays
-      .map((author) => author.id);
-    console.log('Author IDs:', isAuthorReview);
-    const isCurrentUserReview = isAuthorReview.map((id) => id === currentUser);
-    console.log(isCurrentUserReview);
-
-    res.render('conference/show', {
-      conference,
-      currentUser,
-      isAuthor,
-      isAuthorReview,
-      isCurrentUserReview,
-    });
-  })
-);
+app.get('/conference/:id', catchAsync(conferences.renderShow));
 
 app.get(
   '/conferences/:id/edit',
   isLoggedIn,
   isAuthor,
-  catchAsync(async (req, res) => {
-    const conference = await prisma.conferenceschema.findUnique({
-      where: {
-        id: parseInt(req.params.id),
-      },
-    });
-    if (!conference) {
-      req.flash('error', 'Cannot find that conference');
-      return res.redirect('/conferences');
-    }
-
-    res.render('conference/edit', { conference });
-  })
+  catchAsync(conferences.renderEditForm)
 );
 
 app.put(
   '/conference/:id',
+  upload.array('image'),
   isLoggedIn,
   isAuthor,
-  validateconferences,
-  catchAsync(async (req, res) => {
-    const conferenceData = req.body.conference;
-
-    priceInt(conferenceData);
-
-    const conference = await prisma.conferenceschema.update({
-      where: {
-        id: parseInt(req.params.id),
-      },
-      data: conferenceData,
-    });
-
-    req.flash('success', 'Successfully updated the conference');
-    res.redirect(`/conference/${conference.id}`);
-  })
+  // validateconferences,
+  catchAsync(conferences.editForm)
 );
 
 // Reviws:
@@ -212,139 +130,24 @@ app.post(
   '/conference/:id/reviews',
   validatereviwe,
   isLoggedIn,
-  catchAsync(async (req, res) => {
-    const conferenceId = parseInt(req.params.id);
-    const conference = await prisma.conferenceschema.findUnique({
-      where: {
-        id: conferenceId,
-      },
-      include: {
-        reviews: true,
-        authors: true,
-      },
-    });
-    // console.log(conference);
-
-    const currentUser = req.user;
-    const { body, rating } = req.body.review;
-    const review = await prisma.review.create({
-      data: {
-        body: body,
-        rating: parseInt(rating),
-        conferenceschemaId: conferenceId,
-        author: { connect: { id: currentUser.id } },
-      },
-      include: {
-        author: true,
-      },
-    });
-
-    req.flash('success', 'Successfully made a new review');
-    res.redirect(`/conference/${conferenceId}`);
-  })
+  catchAsync(reviews.addReview)
 );
 
 // delete
-app.delete(
-  '/conference/:id',
-  catchAsync(async (req, res) => {
-    await prisma.conferenceschema.delete({
-      where: {
-        id: parseInt(req.params.id),
-      },
-    });
-    req.flash('success', 'Successfully delete conferences');
-    res.redirect('/conferences');
-  })
-);
+app.delete('/conference/:id', catchAsync(reviews.deleteReviw));
 
-app.delete(
-  '/conference/:id/reviews/:reviewId',
-  catchAsync(async (req, res) => {
-    const { id, reviewId } = req.params;
-    console.log(id, reviewId);
-
-    await prisma.review.delete({
-      where: {
-        conferenceschemaId: parseInt(id),
-        id: parseInt(reviewId),
-      },
-    });
-    req.flash('success', 'Successfully delete review');
-    res.redirect(`/conference/${id}`);
-  })
-);
+app.delete('/conference/:id/reviews/:reviewId', catchAsync(conferences.delete));
 
 // Auth
-app.get('/register', (req, res) => {
-  res.render('user/register');
-});
+app.get('/register', users.renderRegister);
 
-app.post(
-  '/register',
-  catchAsync(async (req, res) => {
-    try {
-      const { username, email, password } = req.body;
-      const hashedPassword = await bcrypt.hash(password, 12);
-      await prisma.user.create({
-        data: {
-          username: username,
-          email: email,
-          password: hashedPassword,
-        },
-      });
+app.post('/register', catchAsync(users.registerForm));
 
-      req.flash('success', 'Please login to continue!');
-      return res.redirect('/login');
-    } catch (e) {
-      req.flash('error', 'somthing wrong try again');
-      return res.redirect('/register');
-    }
-  })
-);
+app.get('/login', users.renderLogin);
 
-app.get('/login', (req, res) => {
-  res.render('user/login');
-});
+app.post('/login', catchAsync(users.loginForm));
 
-app.post(
-  '/login',
-  catchAsync(async (req, res) => {
-    const { username, password } = req.body;
-
-    try {
-      const user = await prisma.user.findUnique({ where: { username } });
-      if (!user) {
-        req.flash('error', 'user not found');
-        return res.redirect('/login');
-      }
-
-      const validPassword = await bcrypt.compare(password, user.password);
-      if (!validPassword) {
-        req.flash('error', '  Invalid Username Password  Try Again');
-        return res.redirect('/login');
-      }
-      req.session.userId = user.id;
-
-      req.session.save((err) => {
-        if (err) throw new Error(err);
-
-        req.flash('success', `Welcome ${username}`);
-        res.redirect(req.session.returnTO || '/conferences');
-      });
-    } catch (error) {
-      req.flash('error', error.message);
-      return res.redirect('/login');
-    }
-  })
-);
-
-app.get('/logout', (req: any, res) => {
-  req.session.destroy((err) => {
-    if (err) throw new Error(err);
-    return res.redirect('/conferences');
-  });
-});
+app.get('/logout', users.logout);
 
 app.all('*', (req, res, next) => {
   next(new ExpressError('Page Not Found', 404));

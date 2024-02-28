@@ -16,7 +16,9 @@ model conferenceschema{
   price  Int?
   description String? @db.VarChar(1000)
   location String?
-  image String? @db.VarChar(1000)
+  images Image[] 
+
+  
   reviews  review[]
 
   authors User[]
@@ -29,7 +31,8 @@ model review{
   rating Int?
   conferences conferenceschema @relation(fields: [conferenceschemaId], references: [id], onDelete: Cascade)
   conferenceschemaId Int
-  author User []
+  author User   @relation(fields: [authorId], references: [id])
+  authorId Int
 }
 
 model User{
@@ -38,9 +41,17 @@ model User{
   email String @unique
   password String
   conferenceschemas conferenceschema[]
-  review review[]
+  review review[]   
 
 
+}
+
+model Image{
+  id           Int            @id @default(autoincrement()) 
+  url          String         @db.VarChar(1000)
+  filename     String         @db.VarChar(1000)
+  conferenceschema conferenceschema @relation(fields: [conferenceschemaId], references: [id], onDelete: Cascade)
+  conferenceschemaId Int
 }
 
 model Session {

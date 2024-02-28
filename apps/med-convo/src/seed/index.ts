@@ -32,7 +32,7 @@ const seedDB = async () => {
         ${cities[random1000].state}`,
         title: `${sample(descriptors)} ${sample(places)}`,
         authors: { connect: { id: 1 } },
-        image: 'https://source.unsplash.com/collection/483251',
+        images: 'https://source.unsplash.com/collection/483251',
         description:
           'Lorem ipsum dolor sit amet consectetur adipisicing elit. Facilis, suscipit? Cumque enim rerum aperiam, est quis tempore perferendis illo rem veniam? Quas id aperiam alias veritatis ut quis voluptatem rerum.',
         price: price,
