@@ -22,7 +22,7 @@ async function main() {
 const sample = (array) => array[Math.floor(Math.random() * array.length)];
 
 const seedDB = async () => {
-  await prisma.conferenceschema.deleteMany();
+  // await prisma.conferenceschema.deleteMany();
   for (let i = 1; i <= 50; i++) {
     const random1000 = Math.floor(Math.random() * 1000);
     const price = Math.floor(Math.random() * 20) + 10;
@@ -31,8 +31,8 @@ const seedDB = async () => {
         location: `${cities[random1000].city},
         ${cities[random1000].state}`,
         title: `${sample(descriptors)} ${sample(places)}`,
-        authors: { connect: { id: 1 } },
-        images: 'https://source.unsplash.com/collection/483251',
+        authors: { connect: { id: 2 } },
+        images: { connect: { id: 32 } },
         description:
           'Lorem ipsum dolor sit amet consectetur adipisicing elit. Facilis, suscipit? Cumque enim rerum aperiam, est quis tempore perferendis illo rem veniam? Quas id aperiam alias veritatis ut quis voluptatem rerum.',
         price: price,

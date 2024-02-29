@@ -135,7 +135,7 @@
         </h6>
         <p class="starability-result" data-rating="<%= review.rating %>"></p>
         <p class="card-text">Review: <%= review.body %></p>
-        <% if (isCurrentUserReview) { %>
+        <% if (currentUser === review.author.id){ %>
         <form
           action="/conference/<%= conference.id %>/reviews/<%= review.id %>?_method=DELETE"
           method="POST"

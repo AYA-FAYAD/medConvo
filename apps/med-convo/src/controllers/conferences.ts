@@ -70,19 +70,15 @@ module.exports.renderShow = async (req, res) => {
   const isAuthor = conference.authors.some(
     (author) => author.id === currentUser
   );
-  const isAuthorReview = conference.reviews
-    .flatMap((review) => review.author) // flatten the array of arrays
-    .map((author) => author.id);
-  console.log('Author IDs:', isAuthorReview);
-  const isCurrentUserReview = isAuthorReview.map((id) => id === currentUser);
-  console.log(isCurrentUserReview);
+
+  // const isAuthorReview = reviews.author.some(
+  //   (author) => review.author === currentUser
+  // );
 
   res.render('conference/show', {
     conference,
     currentUser,
     isAuthor,
-    isAuthorReview,
-    isCurrentUserReview,
     images: conference.images,
   });
 };
@@ -101,34 +97,32 @@ module.exports.renderEditForm = async (req, res) => {
     return res.redirect('/conferences');
   }
 
-  res.render('conference/edit', { conference });
+  res.render('conference/edit', { conference, images: conference.images });
 };
 
 module.exports.editForm = async (req: any, res) => {
-  const { conference: conferenceData, files } = req.body;
+  const conferenceData = req.body.conference;
   const conferenceId = parseInt(req.params.id);
+  console.log('req.body:', req.body);
 
-  console.log(files);
+  const files = req.files;
 
-  // Update conference data
+  // console.log(files);
+
   priceInt(conferenceData);
   const updatedConference = await prisma.conferenceschema.update({
     where: { id: conferenceId },
     data: conferenceData,
   });
 
-  // Update images if files are provided
   if (files && files.length > 0) {
-    // Delete existing images associated with the conference
     await prisma.image.deleteMany({
       where: { conferenceschemaId: conferenceId },
     });
-
-    // Create new images for the conference
     const images = files.map((file) => ({
       url: file.path,
       filename: file.filename,
-      conferenceschema: { connect: { id: conferenceId } }, // Associate the image with the conference
+      conferenceschemaId: conferenceId,
     }));
     console.log(images);
     await prisma.image.createMany({

@@ -121,7 +121,7 @@ app.put(
   upload.array('image'),
   isLoggedIn,
   isAuthor,
-  // validateconferences,
+  validateconferences,
   catchAsync(conferences.editForm)
 );
 
