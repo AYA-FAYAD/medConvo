@@ -1,6 +1,7 @@
 import { PrismaSessionStore } from '@quixo3/prisma-session-store';
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
+const { cloudinary } = require('../cloudinary/index');
 
 // Convert price to an integer
 const priceInt = (conference) => {
@@ -106,6 +107,7 @@ module.exports.editForm = async (req: any, res) => {
   console.log('req.body:', req.body);
 
   const files = req.files;
+  const public_id = `MedConvo/${files.filename}`;
 
   // console.log(files);
 
@@ -116,6 +118,7 @@ module.exports.editForm = async (req: any, res) => {
   });
 
   if (files && files.length > 0) {
+    await cloudinary.uploader.destroy(public_id);
     await prisma.image.deleteMany({
       where: { conferenceschemaId: conferenceId },
     });
