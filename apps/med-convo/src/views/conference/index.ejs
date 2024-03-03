@@ -1,26 +1,38 @@
 <% layout('layouts/boilerplate') %>
+
+<style>
+  .conference-image {
+    width: 100%; /* Ensure the image takes up the full width of its container */
+    object-fit: cover; /* Maintain aspect ratio while covering the container */
+  }
+</style>
+
 <h1>All Conferences</h1>
-<div>
-  <a href="/conferences/new"> Add New Conference</a>
-</div>
-<% for (let conference of conferences) {%>
-<div class="card">
+
+<% for (let conference of conferences) { %>
+<div class="card mb-3">
   <div class="row">
-    <div class="col-md-8">
+    <div class="col-md-4">
       <% conference.images.forEach(image => { %>
-      <img src="<%= image.url %>" class="img-fluid" alt="..." />
+      <img
+        src="<%= image.url %>"
+        class="img-fluid conference-image"
+        alt="Conference Image"
+      />
       <% }) %>
+    </div>
+    <div class="col-md-8">
       <div class="card-body">
         <h5 class="card-title"><%= conference.title %></h5>
         <p class="card-text"><%= conference.description %></p>
         <p class="card-text">
           <small class="text-muted"><%= conference.location %></small>
         </p>
-        <a class="btn btn-primary" href="/conference/<%=conference.id%>"
+        <a class="btn btn-secondary" href="/conference/<%= conference.id %>"
           >View <%= conference.title %></a
         >
       </div>
     </div>
   </div>
 </div>
-<%}%>
+<% } %>
