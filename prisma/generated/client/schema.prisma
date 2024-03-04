@@ -1,0 +1,64 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  
+}
+
+model conferenceschema{
+  id     Int       @id @default(autoincrement()) 
+  title  String?
+  price  Int?
+  description String? @db.VarChar(1000)
+  location String?
+  images Image[] 
+
+  
+  reviews  review[]
+
+  authors User[]
+
+}
+
+model review{
+  id    Int    @id @default(autoincrement())
+  body String? @db.VarChar(1000)
+  rating Int?
+  conferences conferenceschema @relation(fields: [conferenceschemaId], references: [id], onDelete: Cascade)
+  conferenceschemaId Int
+  author User   @relation(fields: [authorId], references: [id])
+  authorId Int
+}
+
+model User{
+  id Int @id @default(autoincrement())
+  username String @unique
+  email String @unique
+  password String
+  conferenceschemas conferenceschema[]
+  review review[]   
+
+
+}
+
+model Image{
+  id           Int            @id @default(autoincrement()) 
+  url          String         @db.VarChar(1000)
+  filename     String         @db.VarChar(1000)
+  conferenceschema conferenceschema @relation(fields: [conferenceschemaId], references: [id], onDelete: Cascade)
+  conferenceschemaId Int
+}
+
+model Session {
+  id        String   @id
+  sid       String   @unique
+  data      String
+  expiresAt   DateTime
+}

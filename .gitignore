@@ -45,3 +45,4 @@ workspace.json
 
 # Custom environment files
 .env
+.vercel
