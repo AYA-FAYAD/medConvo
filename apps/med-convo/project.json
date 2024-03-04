@@ -4,14 +4,6 @@
   "sourceRoot": "apps/med-convo/src",
   "projectType": "application",
   "targets": {
-    "build": {
-      "executor": "@nx/node:build",
-      "options": {
-        "outputPath": "dist/apps/med-convo",
-        "main": "apps/med-convo/src/main.ts",
-        "tsConfig": "apps/med-convo/tsconfig.app.json"
-      }
-    },
     "serve": {
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
