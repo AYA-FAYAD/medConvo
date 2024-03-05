@@ -40,8 +40,6 @@ Thumbs.db
 
 # Nx-specific
 .nx/
-nx.json
-workspace.json
 
 # Custom environment files
 .env
