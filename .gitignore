@@ -41,6 +41,8 @@ Thumbs.db
 # Nx-specific
 .nx/
 
+uploads/
+
 # Custom environment files
 .env
 .vercel
