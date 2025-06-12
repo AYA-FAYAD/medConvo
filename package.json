@@ -8,7 +8,7 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "build": "echo '🏗️ Building app...'; npx nx build med-convo && npm run prisma:generate && npm run prisma:push",
-    "start": "node dist/apps/med-convo/index.js"
+    "start": "node dist/apps/med-convo/main.js"
   },
   "private": true,
   "dependencies": {
