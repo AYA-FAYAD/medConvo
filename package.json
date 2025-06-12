@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "prisma:generate": "prisma generate",
-    "build": "npx nx build med-convo",
+    "build": "npx nx build med-convo && npm run prisma:generate",
     "start": "node dist/apps/med-convo/main.js"
   },
   "private": true,
