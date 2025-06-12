@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "npx nx build med-convo",
+    "prisma:generate": "prisma generate",
+    "build": "npx nx build med-convo && npm run prisma:generate",
     "start": "node dist/apps/med-convo/main.js"
   },
   "private": true,
