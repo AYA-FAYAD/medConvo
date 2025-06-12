@@ -3,9 +3,12 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "preinstall": "echo '🔄 Installing dependencies...'",
+    "postinstall": "echo '✅ Dependencies installed!'",
     "prisma:generate": "prisma generate",
-    "build": "npx nx build med-convo && npm run prisma:generate",
-    "start": "node dist/apps/med-convo/main.js"
+    "prisma:push": "prisma db push",
+    "build": "echo '🏗️ Building app...'; npx nx build med-convo && npm run prisma:generate && npm run prisma:push",
+    "start": "node dist/apps/med-convo/index.js"
   },
   "private": true,
   "dependencies": {
