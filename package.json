@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "start": "node dist/apps/api/index.js"
+    "build": "npx nx build med-convo",
+    "start": "node dist/apps/med-convo/main.js"
   },
   "private": true,
   "dependencies": {

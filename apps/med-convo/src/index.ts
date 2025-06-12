@@ -6,7 +6,7 @@
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
-
+//
 console.log(process.env.scret);
 
 const ejsMate = require('ejs-mate');
@@ -211,6 +211,6 @@ app.use((err, req, res, next) => {
 
 const port = process.env.PORT || 3333;
 const server = app.listen(port, () => {
-  console.log(`Listening at http://localhost:${port}/api`);
+  console.log(`Listening at http://localhost:${port}`);
 });
 server.on('error', console.error);
